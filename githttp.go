@@ -20,7 +20,10 @@ type GitHttp struct {
 	// Access rules
 	UploadPack  bool
 	ReceivePack bool
-	AutoCreate  bool
+
+	// Implicit generation
+	AutoCreate bool
+	Prep       *Preprocessor
 
 	// Event handling functions
 	EventHandler func(ev Event)
@@ -56,7 +59,7 @@ func (g *GitHttp) event(e Event) {
 	if g.EventHandler != nil {
 		g.EventHandler(e)
 	} else {
-		fmt.Printf("EVENT: %q\n", e)
+		fmt.Printf("EVENT: %q\n", e.Error)
 	}
 }
 
@@ -243,6 +246,23 @@ func (g *GitHttp) getGitDir(file_path string) (string, error) {
 			return "", err
 		}
 		_, err = g.gitCommand(f, "--bare", "init")
+		if err != nil {
+			return "", err
+		}
+		err = g.Prep.Process(&ProcessParams{
+			Repository: file_path,
+			LocalPath:  f,
+			IsNew:      true,
+		}).Err
+		if err != nil {
+			return "", err
+		}
+
+	} else if !g.Prep.IsNil() && g.Prep.Process != nil {
+		err = g.Prep.Process(&ProcessParams{
+			Repository: file_path,
+			LocalPath:  f,
+		}).Err
 		if err != nil {
 			return "", err
 		}

@@ -1,7 +1,7 @@
 go-git-http
 ===========
 
-[![Build Status](https://travis-ci.org/AaronO/go-git-http.svg)](https://travis-ci.org/AaronO/go-git-http)
+[![Build Status](https://travis-ci.org/gofunky/go-git-http.svg)](https://travis-ci.org/gofunky/go-git-http)
 
 A Smart Git Http server library in Go (golang)
 
@@ -14,7 +14,7 @@ import (
     "log"
     "net/http"
 
-    "github.com/AaronO/go-git-http"
+    "github.com/gofunky/go-git-http"
 )
 
 func main() {
@@ -41,8 +41,8 @@ import (
     "log"
     "net/http"
 
-    "github.com/AaronO/go-git-http"
-    "github.com/AaronO/go-git-http/auth"
+    "github.com/gofunky/go-git-http"
+    "github.com/gofunky/go-git-http/auth"
 )
 
 

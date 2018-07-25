@@ -10,9 +10,9 @@ type Event struct {
 	// One of tag/push/fetch
 	Type EventType `json:"type"`
 
-	////
+	// //
 	// Set for pushes and pulls
-	////
+	// //
 
 	// SHA of commit
 	Commit string `json:"commit"`
@@ -20,9 +20,9 @@ type Event struct {
 	// Path to bare repo
 	Dir string
 
-	////
+	// //
 	// Set for pushes or tagging
-	////
+	// //
 	Tag    string `json:"tag,omitempty"`
 	Last   string `json:"last,omitempty"`
 	Branch string `json:"branch,omitempty"`
@@ -75,7 +75,7 @@ func (e EventType) UnmarshalJSON(data []byte) error {
 	case "fetch":
 		e = FETCH
 	default:
-		return fmt.Errorf("'%s' is not a known git event type")
+		return fmt.Errorf("'%s' is not a known git event type", data)
 	}
 	return nil
 }
