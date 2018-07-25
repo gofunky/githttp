@@ -1,7 +1,7 @@
 package githttp
 
 type (
-	// The initializer parameters provided
+	// ProcessParams contain the preprocessing parameters.
 	ProcessParams struct {
 		// The public path to the git repository
 		Repository string
@@ -11,19 +11,20 @@ type (
 		IsNew bool
 	}
 
-	// The result of the preprocessor
+	// ProcessResult contains the result of the preprocessor.
 	ProcessResult struct {
 		// If the processing fails or the parameters don't meet the requirements, otherwise nil
 		Err error
 	}
 
-	// To be implemented by the preprocessor
+	// Preprocessor is called on every git request.
 	Preprocessor struct {
 		// Update the code now
 		Process func(params *ProcessParams) ProcessResult
 	}
 )
 
+// IsNil returns true if a the Preprocessor struct is nil.
 func (t *Preprocessor) IsNil() bool {
 	if t == nil {
 		return true

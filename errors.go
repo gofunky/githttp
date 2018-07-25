@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// ErrorNoAccess is a error with the path to the requested repository
 type ErrorNoAccess struct {
 	// Path to directory of repo accessed
 	Dir string

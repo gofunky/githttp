@@ -2,6 +2,8 @@ go-git-http
 ===========
 
 [![Build Status](https://travis-ci.org/gofunky/go-git-http.svg)](https://travis-ci.org/gofunky/go-git-http)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gofunky/go-git-http)](https://goreportcard.com/report/github.com/gofunky/go-git-http)
+
 
 A Smart Git Http server library in Go (golang)
 

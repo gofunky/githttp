@@ -149,8 +149,8 @@ func (g *GitHttp) serviceRpc(hr HandlerReq) error {
 
 func (g *GitHttp) getInfoRefs(hr HandlerReq) error {
 	w, r, dir := hr.w, hr.r, hr.Dir
-	service_name := getServiceType(r)
-	access, err := g.hasAccess(r, dir, service_name, false)
+	serviceName := getServiceType(r)
+	access, err := g.hasAccess(r, dir, serviceName, false)
 	if err != nil {
 		return err
 	}
@@ -161,16 +161,16 @@ func (g *GitHttp) getInfoRefs(hr HandlerReq) error {
 		return sendFile("text/plain; charset=utf-8", hr)
 	}
 
-	args := []string{service_name, "--stateless-rpc", "--advertise-refs", "."}
+	args := []string{serviceName, "--stateless-rpc", "--advertise-refs", "."}
 	refs, err := g.gitCommand(dir, args...)
 	if err != nil {
 		return err
 	}
 
 	hdrNocache(w)
-	w.Header().Set("Content-Type", fmt.Sprintf("application/x-git-%s-advertisement", service_name))
+	w.Header().Set("Content-Type", fmt.Sprintf("application/x-git-%s-advertisement", serviceName))
 	w.WriteHeader(http.StatusOK)
-	w.Write(packetWrite("# service=git-" + service_name + "\n"))
+	w.Write(packetWrite("# service=git-" + serviceName + "\n"))
 	w.Write(packetFlush())
 	w.Write(refs)
 
@@ -204,24 +204,24 @@ func (g *GitHttp) getTextFile(hr HandlerReq) error {
 
 // Logic helping functions
 
-func sendFile(content_type string, hr HandlerReq) error {
+func sendFile(contentType string, hr HandlerReq) error {
 	w, r := hr.w, hr.r
-	req_file := path.Join(hr.Dir, hr.File)
+	reqFile := path.Join(hr.Dir, hr.File)
 
-	f, err := os.Stat(req_file)
+	f, err := os.Stat(reqFile)
 	if err != nil {
 		return err
 	}
 
-	w.Header().Set("Content-Type", content_type)
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", f.Size()))
 	w.Header().Set("Last-Modified", f.ModTime().Format(http.TimeFormat))
-	http.ServeFile(w, r, req_file)
+	http.ServeFile(w, r, reqFile)
 
 	return nil
 }
 
-func (g *GitHttp) getGitDir(file_path string) (string, error) {
+func (g *GitHttp) getGitDir(filePath string) (string, error) {
 	root := g.ProjectRoot
 
 	if root == "" {
@@ -234,7 +234,7 @@ func (g *GitHttp) getGitDir(file_path string) (string, error) {
 		root = cwd
 	}
 
-	f := path.Join(root, file_path)
+	f := path.Join(root, filePath)
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		// If AutoCreate is false, just bail
 		if !g.AutoCreate {
@@ -250,7 +250,7 @@ func (g *GitHttp) getGitDir(file_path string) (string, error) {
 			return "", err
 		}
 		err = g.Prep.Process(&ProcessParams{
-			Repository: file_path,
+			Repository: filePath,
 			LocalPath:  f,
 			IsNew:      true,
 		}).Err
@@ -260,7 +260,7 @@ func (g *GitHttp) getGitDir(file_path string) (string, error) {
 
 	} else if !g.Prep.IsNil() && g.Prep.Process != nil {
 		err = g.Prep.Process(&ProcessParams{
-			Repository: file_path,
+			Repository: filePath,
 			LocalPath:  f,
 		}).Err
 		if err != nil {
@@ -271,8 +271,8 @@ func (g *GitHttp) getGitDir(file_path string) (string, error) {
 	return f, nil
 }
 
-func (g *GitHttp) hasAccess(r *http.Request, dir string, rpc string, check_content_type bool) (bool, error) {
-	if check_content_type {
+func (g *GitHttp) hasAccess(r *http.Request, dir string, rpc string, checkContentType bool) (bool, error) {
+	if checkContentType {
 		if r.Header.Get("Content-Type") != fmt.Sprintf("application/x-git-%s-request", rpc) {
 			return false, nil
 		}
@@ -291,22 +291,22 @@ func (g *GitHttp) hasAccess(r *http.Request, dir string, rpc string, check_conte
 	return g.getConfigSetting(rpc, dir)
 }
 
-func (g *GitHttp) getConfigSetting(service_name string, dir string) (bool, error) {
-	service_name = strings.Replace(service_name, "-", "", -1)
-	setting, err := g.getGitConfig("http."+service_name, dir)
+func (g *GitHttp) getConfigSetting(serviceName string, dir string) (bool, error) {
+	serviceName = strings.Replace(serviceName, "-", "", -1)
+	setting, err := g.getGitConfig("http."+serviceName, dir)
 	if err != nil {
 		return false, nil
 	}
 
-	if service_name == "uploadpack" {
+	if serviceName == "uploadpack" {
 		return setting != "false", nil
 	}
 
 	return setting == "true", nil
 }
 
-func (g *GitHttp) getGitConfig(config_name string, dir string) (string, error) {
-	args := []string{"config", config_name}
+func (g *GitHttp) getGitConfig(configName string, dir string) (string, error) {
+	args := []string{"config", configName}
 	out, err := g.gitCommand(dir, args...)
 	if err != nil {
 		return "", err
