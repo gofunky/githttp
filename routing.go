@@ -10,7 +10,7 @@ import (
 type Service struct {
 	Method  string
 	Handler func(HandlerReq) error
-	Rpc     string
+	RPC     string
 }
 
 type HandlerReq struct {
@@ -23,12 +23,12 @@ type HandlerReq struct {
 
 // Routing regexes
 var (
-	_serviceRpcUpload  = regexp.MustCompile("(.*?)/git-upload-pack$")
-	_serviceRpcReceive = regexp.MustCompile("(.*?)/git-receive-pack$")
+	_serviceRPCUpload  = regexp.MustCompile("(.*?)/git-upload-pack$")
+	_serviceRPCReceive = regexp.MustCompile("(.*?)/git-receive-pack$")
 	_getInfoRefs       = regexp.MustCompile("(.*?)/info/refs$")
 	_getHead           = regexp.MustCompile("(.*?)/HEAD$")
 	_getAlternates     = regexp.MustCompile("(.*?)/objects/info/alternates$")
-	_getHttpAlternates = regexp.MustCompile("(.*?)/objects/info/http-alternates$")
+	_getHTPPAlternates = regexp.MustCompile("(.*?)/objects/info/http-alternates$")
 	_getInfoPacks      = regexp.MustCompile("(.*?)/objects/info/packs$")
 	_getInfoFile       = regexp.MustCompile("(.*?)/objects/info/[^/]*$")
 	_getLooseObject    = regexp.MustCompile("(.*?)/objects/[0-9a-f]{2}/[0-9a-f]{38}$")
@@ -38,12 +38,12 @@ var (
 
 func (g *gitContext) services() map[*regexp.Regexp]Service {
 	return map[*regexp.Regexp]Service{
-		_serviceRpcUpload:  {"POST", g.serviceRpc, "upload-pack"},
-		_serviceRpcReceive: {"POST", g.serviceRpc, "receive-pack"},
+		_serviceRPCUpload:  {"POST", g.serviceRPC, "upload-pack"},
+		_serviceRPCReceive: {"POST", g.serviceRPC, "receive-pack"},
 		_getInfoRefs:       {"GET", g.getInfoRefs, ""},
 		_getHead:           {"GET", g.getTextFile, ""},
 		_getAlternates:     {"GET", g.getTextFile, ""},
-		_getHttpAlternates: {"GET", g.getTextFile, ""},
+		_getHTPPAlternates: {"GET", g.getTextFile, ""},
 		_getInfoPacks:      {"GET", g.getInfoPacks, ""},
 		_getInfoFile:       {"GET", g.getTextFile, ""},
 		_getLooseObject:    {"GET", g.getLooseObject, ""},
@@ -83,8 +83,8 @@ func (g *gitContext) requestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Rpc type
-	rpc := service.Rpc
+	// RPC type
+	rpc := service.RPC
 
 	// Get specific file
 	file := strings.Replace(r.URL.Path, repo+"/", "", 1)

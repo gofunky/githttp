@@ -11,7 +11,7 @@ type RpcReader struct {
 	// Underlying reader (to relay calls to).
 	io.Reader
 
-	// Rpc type (receive-pack or upload-pack).
+	// RPC type (receive-pack or upload-pack).
 	Rpc string
 
 	// List of events RpcReader has picked up through scanning.

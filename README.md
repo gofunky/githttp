@@ -21,7 +21,7 @@ import (
 
 func main() {
     // Get git handler to serve a directory of repos
-    git, err := githttp.New(githttp.GitOptions{
+    git, err := githttp.NewGitContext(githttp.GitOptions{
     	ProjectRoot: "my/repos",
     	AutoCreate: true,
     	ReceivePack: true,
@@ -72,7 +72,7 @@ import (
 
 func main() {
     // Get git handler to serve a directory of repos
-    git, err := githttp.New(githttp.GitOptions{
+    git, err := githttp.NewGitContext(githttp.GitOptions{
     	ProjectRoot: "my/repos",
     	ReceivePack: true,
     	UploadPack: true,

@@ -11,8 +11,8 @@ import (
 )
 
 type (
-	// GitHttp exposes the interfaces of the git server.
-	GitHttp interface {
+	// GitHTTP exposes the interfaces of the git server.
+	GitHTTP interface {
 		Init() (*gitContext, error)
 		ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
@@ -44,14 +44,14 @@ type (
 )
 
 // Factory for the git server.
-func New(options GitOptions) (context GitHttp, err error) {
+func NewGitContext(options GitOptions) (context GitHTTP, err error) {
 	if options.ProjectRoot == "" {
-		return nil, MissingArgument
+		return nil, ErrMissingArgument
 	}
 	if options.GitBinPath == "" {
 		binary, lookErr := exec.LookPath("git")
 		if lookErr != nil {
-			return nil, MissingArgument
+			return nil, ErrMissingArgument
 		}
 		options.GitBinPath = binary
 	}
@@ -85,7 +85,7 @@ func (g *gitContext) event(e Event) {
 
 // Actual command handling functions
 
-func (g *gitContext) serviceRpc(hr HandlerReq) error {
+func (g *gitContext) serviceRPC(hr HandlerReq) error {
 	w, r, rpc, dir := hr.w, hr.r, hr.Rpc, hr.Dir
 
 	access, err := g.hasAccess(r, dir, rpc, true)
