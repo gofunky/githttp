@@ -10,54 +10,74 @@ import (
 	"strings"
 )
 
-type GitHttp struct {
-	// Root directory to serve repos from
-	ProjectRoot string
+type (
+	// GitHttp exposes the interfaces of the git server.
+	GitHttp interface {
+		Init() (*gitContext, error)
+		ServeHTTP(w http.ResponseWriter, r *http.Request)
+	}
 
-	// Path to git binary
-	GitBinPath string
+	// gitContext is the context on that the git server operates on.
+	gitContext struct {
+		options GitOptions
+	}
 
-	// Access rules
-	UploadPack  bool
-	ReceivePack bool
+	// GitOptions contains the the git server options.
+	GitOptions struct {
+		// Root directory to serve repos from
+		ProjectRoot string
 
-	// Implicit generation
-	AutoCreate bool
-	Prep       *Preprocessor
+		// Path to git binary
+		GitBinPath string
 
-	// Event handling functions
-	EventHandler func(ev Event)
+		// Access rules
+		UploadPack  bool
+		ReceivePack bool
+
+		// Implicit generation
+		AutoCreate bool
+		Prep       *Preprocessor
+
+		// Event handling functions
+		EventHandler func(ev Event)
+	}
+)
+
+// Factory for the git server.
+func New(options GitOptions) (context GitHttp, err error) {
+	if options.ProjectRoot == "" {
+		return nil, MissingArgument
+	}
+	if options.GitBinPath == "" {
+		binary, lookErr := exec.LookPath("git")
+		if lookErr != nil {
+			return nil, MissingArgument
+		}
+		options.GitBinPath = binary
+	}
+	return &gitContext{
+		options: options,
+	}, nil
 }
 
 // Implement the http.Handler interface
-func (g *GitHttp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (g *gitContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	g.requestHandler(w, r)
 	return
 }
 
-// Shorthand constructor for most common scenario
-func New(root string) *GitHttp {
-	return &GitHttp{
-		ProjectRoot: root,
-		GitBinPath:  "/usr/bin/git",
-		UploadPack:  true,
-		ReceivePack: true,
-		AutoCreate:  false,
-	}
-}
-
 // Build root directory if doesn't exist
-func (g *GitHttp) Init() (*GitHttp, error) {
-	if err := os.MkdirAll(g.ProjectRoot, os.ModePerm); err != nil {
+func (g *gitContext) Init() (*gitContext, error) {
+	if err := os.MkdirAll(g.options.ProjectRoot, os.ModePerm); err != nil {
 		return nil, err
 	}
 	return g, nil
 }
 
 // Publish event if EventHandler is set
-func (g *GitHttp) event(e Event) {
-	if g.EventHandler != nil {
-		g.EventHandler(e)
+func (g *gitContext) event(e Event) {
+	if g.options.EventHandler != nil {
+		g.options.EventHandler(e)
 	} else {
 		fmt.Printf("EVENT: %q\n", e.Error)
 	}
@@ -65,7 +85,7 @@ func (g *GitHttp) event(e Event) {
 
 // Actual command handling functions
 
-func (g *GitHttp) serviceRpc(hr HandlerReq) error {
+func (g *gitContext) serviceRpc(hr HandlerReq) error {
 	w, r, rpc, dir := hr.w, hr.r, hr.Rpc, hr.Dir
 
 	access, err := g.hasAccess(r, dir, rpc, true)
@@ -94,7 +114,7 @@ func (g *GitHttp) serviceRpc(hr HandlerReq) error {
 	w.Header().Set("Content-Type", fmt.Sprintf("application/x-git-%s-result", rpc))
 
 	args := []string{rpc, "--stateless-rpc", "."}
-	cmd := exec.Command(g.GitBinPath, args...)
+	cmd := exec.Command(g.options.GitBinPath, args...)
 	cmd.Dir = dir
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -147,7 +167,7 @@ func (g *GitHttp) serviceRpc(hr HandlerReq) error {
 	return nil
 }
 
-func (g *GitHttp) getInfoRefs(hr HandlerReq) error {
+func (g *gitContext) getInfoRefs(hr HandlerReq) error {
 	w, r, dir := hr.w, hr.r, hr.Dir
 	serviceName := getServiceType(r)
 	access, err := g.hasAccess(r, dir, serviceName, false)
@@ -177,27 +197,27 @@ func (g *GitHttp) getInfoRefs(hr HandlerReq) error {
 	return nil
 }
 
-func (g *GitHttp) getInfoPacks(hr HandlerReq) error {
+func (g *gitContext) getInfoPacks(hr HandlerReq) error {
 	hdrCacheForever(hr.w)
 	return sendFile("text/plain; charset=utf-8", hr)
 }
 
-func (g *GitHttp) getLooseObject(hr HandlerReq) error {
+func (g *gitContext) getLooseObject(hr HandlerReq) error {
 	hdrCacheForever(hr.w)
 	return sendFile("application/x-git-loose-object", hr)
 }
 
-func (g *GitHttp) getPackFile(hr HandlerReq) error {
+func (g *gitContext) getPackFile(hr HandlerReq) error {
 	hdrCacheForever(hr.w)
 	return sendFile("application/x-git-packed-objects", hr)
 }
 
-func (g *GitHttp) getIdxFile(hr HandlerReq) error {
+func (g *gitContext) getIdxFile(hr HandlerReq) error {
 	hdrCacheForever(hr.w)
 	return sendFile("application/x-git-packed-objects-toc", hr)
 }
 
-func (g *GitHttp) getTextFile(hr HandlerReq) error {
+func (g *gitContext) getTextFile(hr HandlerReq) error {
 	hdrNocache(hr.w)
 	return sendFile("text/plain", hr)
 }
@@ -221,8 +241,8 @@ func sendFile(contentType string, hr HandlerReq) error {
 	return nil
 }
 
-func (g *GitHttp) getGitDir(filePath string) (string, error) {
-	root := g.ProjectRoot
+func (g *gitContext) getGitDir(filePath string) (string, error) {
+	root := g.options.ProjectRoot
 
 	if root == "" {
 		cwd, err := os.Getwd()
@@ -237,7 +257,7 @@ func (g *GitHttp) getGitDir(filePath string) (string, error) {
 	f := path.Join(root, filePath)
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		// If AutoCreate is false, just bail
-		if !g.AutoCreate {
+		if !g.options.AutoCreate {
 			return "", err
 		}
 		// If AutoCreate is true, attempt to create and initialise the directory
@@ -249,20 +269,20 @@ func (g *GitHttp) getGitDir(filePath string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = g.Prep.Process(&ProcessParams{
+		err = g.options.Prep.Process(&ProcessParams{
 			Repository: filePath,
 			LocalPath:  f,
 			IsNew:      true,
-		}).Err
+		})
 		if err != nil {
 			return "", err
 		}
 
-	} else if !g.Prep.IsNil() && g.Prep.Process != nil {
-		err = g.Prep.Process(&ProcessParams{
+	} else if !g.options.Prep.IsNil() && g.options.Prep.Process != nil {
+		err := g.options.Prep.Process(&ProcessParams{
 			Repository: filePath,
 			LocalPath:  f,
-		}).Err
+		})
 		if err != nil {
 			return "", err
 		}
@@ -271,7 +291,7 @@ func (g *GitHttp) getGitDir(filePath string) (string, error) {
 	return f, nil
 }
 
-func (g *GitHttp) hasAccess(r *http.Request, dir string, rpc string, checkContentType bool) (bool, error) {
+func (g *gitContext) hasAccess(r *http.Request, dir string, rpc string, checkContentType bool) (bool, error) {
 	if checkContentType {
 		if r.Header.Get("Content-Type") != fmt.Sprintf("application/x-git-%s-request", rpc) {
 			return false, nil
@@ -282,16 +302,16 @@ func (g *GitHttp) hasAccess(r *http.Request, dir string, rpc string, checkConten
 		return false, nil
 	}
 	if rpc == "receive-pack" {
-		return g.ReceivePack, nil
+		return g.options.ReceivePack, nil
 	}
 	if rpc == "upload-pack" {
-		return g.UploadPack, nil
+		return g.options.UploadPack, nil
 	}
 
 	return g.getConfigSetting(rpc, dir)
 }
 
-func (g *GitHttp) getConfigSetting(serviceName string, dir string) (bool, error) {
+func (g *gitContext) getConfigSetting(serviceName string, dir string) (bool, error) {
 	serviceName = strings.Replace(serviceName, "-", "", -1)
 	setting, err := g.getGitConfig("http."+serviceName, dir)
 	if err != nil {
@@ -305,7 +325,7 @@ func (g *GitHttp) getConfigSetting(serviceName string, dir string) (bool, error)
 	return setting == "true", nil
 }
 
-func (g *GitHttp) getGitConfig(configName string, dir string) (string, error) {
+func (g *gitContext) getGitConfig(configName string, dir string) (string, error) {
 	args := []string{"config", configName}
 	out, err := g.gitCommand(dir, args...)
 	if err != nil {
@@ -314,13 +334,13 @@ func (g *GitHttp) getGitConfig(configName string, dir string) (string, error) {
 	return string(out)[0 : len(out)-1], nil
 }
 
-func (g *GitHttp) updateServerInfo(dir string) ([]byte, error) {
+func (g *gitContext) updateServerInfo(dir string) ([]byte, error) {
 	args := []string{"update-server-info"}
 	return g.gitCommand(dir, args...)
 }
 
-func (g *GitHttp) gitCommand(dir string, args ...string) ([]byte, error) {
-	command := exec.Command(g.GitBinPath, args...)
+func (g *gitContext) gitCommand(dir string, args ...string) ([]byte, error) {
+	command := exec.Command(g.options.GitBinPath, args...)
 	command.Dir = dir
 
 	return command.Output()

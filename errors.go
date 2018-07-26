@@ -1,8 +1,12 @@
 package githttp
 
 import (
+	"errors"
 	"fmt"
 )
+
+// MissingArgument is to be returned if there are git server options missing that are passed to the factory.
+var MissingArgument = errors.New("Insufficient factory options options provided.")
 
 // ErrorNoAccess is a error with the path to the requested repository
 type ErrorNoAccess struct {

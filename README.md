@@ -21,15 +21,37 @@ import (
 
 func main() {
     // Get git handler to serve a directory of repos
-    git := githttp.New("/Users/aaron/git")
+    git, err := githttp.New(githttp.GitOptions{
+    	ProjectRoot: "my/repos",
+    	AutoCreate: true,
+    	ReceivePack: true,
+    	UploadPack: true,
+    	EventHandler: func(ev githttp.Event) {
+    	    if ev.Error != nil {
+    	    	log.Fatal(ev)
+    	    }
+    	},
+    	Prep: &githttp.Preprocessor{
+            Process:func(params *githttp.ProcessParams) error {
+            	if params.IsNew {
+            		// E.g., generate .gitignore file
+            	}
+            	return nil
+    		},
+    	},
+    })
+    // Panic if the server context couldn't be created
+    if err != nil {
+    	panic(err)
+    }
 
     // Attach handler to http server
     http.Handle("/", git)
 
     // Start HTTP server
-    err := http.ListenAndServe(":8080", nil)
+    err = http.ListenAndServe(":8080", nil)
     if err != nil {
-        log.Fatal("ListenAndServe: ", err)
+        panic(err)
     }
 }
 ```
@@ -50,7 +72,15 @@ import (
 
 func main() {
     // Get git handler to serve a directory of repos
-    git := githttp.New("/Users/aaron/git")
+    git, err := githttp.New(githttp.GitOptions{
+    	ProjectRoot: "my/repos",
+    	ReceivePack: true,
+    	UploadPack: true,
+    })
+    // Panic if the server context couldn't be created
+    if err != nil {
+    	panic(err)
+    }
 
     // Build an authentication middleware based on a function
     authenticator := auth.Authenticator(func(info auth.AuthInfo) (bool, error) {
@@ -72,7 +102,7 @@ func main() {
     http.Handle("/", authenticator(git))
 
     // Start HTTP server
-    err := http.ListenAndServe(":8080", nil)
+    err = http.ListenAndServe(":8080", nil)
     if err != nil {
         log.Fatal("ListenAndServe: ", err)
     }

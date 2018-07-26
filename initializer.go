@@ -11,16 +11,10 @@ type (
 		IsNew bool
 	}
 
-	// ProcessResult contains the result of the preprocessor.
-	ProcessResult struct {
-		// If the processing fails or the parameters don't meet the requirements, otherwise nil
-		Err error
-	}
-
 	// Preprocessor is called on every git request.
 	Preprocessor struct {
 		// Update the code now
-		Process func(params *ProcessParams) ProcessResult
+		Process func(params *ProcessParams) error
 	}
 )
 
