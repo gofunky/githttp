@@ -15,7 +15,7 @@ package main
 import (
     "log"
     "net/http"
-
+    "crypto/sha1"
     "github.com/gofunky/githttp"
 )
 
@@ -31,13 +31,20 @@ func main() {
     	    	log.Fatal(ev)
     	    }
     	},
-    	Prep: &githttp.Preprocessor{
+    	Prep: &githttp.Preprocesser{
             Process:func(params *githttp.ProcessParams) error {
             	if params.IsNew {
             		// E.g., generate .gitignore file
             	}
             	return nil
     		},
+            Path:func(rawPath string) (targetPath string, err error) {
+            	// Lets hash the string
+            	h := sha1.New()
+            	h.Write([]byte(rawPath))
+            	// Resulting target path will be "./my/repos/{hash(rawPath)}/
+            	return string(h.Sum(nil)), nil
+            },
     	},
     })
     // Panic if the server context couldn't be created

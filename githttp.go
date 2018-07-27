@@ -36,14 +36,14 @@ type (
 
 		// Implicit generation
 		AutoCreate bool
-		Prep       *Preprocessor
+		Prep       *Preprocesser
 
 		// Event handling functions
 		EventHandler func(ev Event)
 	}
 )
 
-// Factory for the git server.
+// NewGitContext is the factory for the git server.
 func NewGitContext(options GitOptions) (context GitHTTP, err error) {
 	if options.ProjectRoot == "" {
 		return nil, ErrMissingArgument
@@ -241,8 +241,9 @@ func sendFile(contentType string, hr HandlerReq) error {
 	return nil
 }
 
-func (g *gitContext) getGitDir(filePath string) (string, error) {
-	root := g.options.ProjectRoot
+func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
+	options := g.options
+	root := options.ProjectRoot
 
 	if root == "" {
 		cwd, err := os.Getwd()
@@ -254,41 +255,52 @@ func (g *gitContext) getGitDir(filePath string) (string, error) {
 		root = cwd
 	}
 
-	f := path.Join(root, filePath)
-	if _, err := os.Stat(f); os.IsNotExist(err) {
+	var subDir string
+	if !options.Prep.IsNil() && options.Prep.Path != nil {
+		subDir, err = options.Prep.Path(repoPath)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		subDir = repoPath
+	}
+	localPath := path.Join(root, subDir)
+	if _, err := os.Stat(localPath); os.IsNotExist(err) {
 		// If AutoCreate is false, just bail
-		if !g.options.AutoCreate {
+		if !options.AutoCreate {
 			return "", err
 		}
 		// If AutoCreate is true, attempt to create and initialise the directory
-		err = os.MkdirAll(f, os.ModePerm)
+		err = os.MkdirAll(localPath, os.ModePerm)
 		if err != nil {
 			return "", err
 		}
-		_, err = g.gitCommand(f, "--bare", "init")
+		_, err = g.gitCommand(localPath, "--bare", "init")
 		if err != nil {
 			return "", err
 		}
-		err = g.options.Prep.Process(&ProcessParams{
-			Repository: filePath,
-			LocalPath:  f,
-			IsNew:      true,
-		})
-		if err != nil {
-			return "", err
+		if !options.Prep.IsNil() && options.Prep.Process != nil {
+			err = options.Prep.Process(&ProcessParams{
+				Repository: repoPath,
+				LocalPath:  localPath,
+				IsNew:      true,
+			})
+			if err != nil {
+				return "", err
+			}
 		}
 
-	} else if !g.options.Prep.IsNil() && g.options.Prep.Process != nil {
-		err := g.options.Prep.Process(&ProcessParams{
-			Repository: filePath,
-			LocalPath:  f,
+	} else if !options.Prep.IsNil() && options.Prep.Process != nil {
+		err := options.Prep.Process(&ProcessParams{
+			Repository: repoPath,
+			LocalPath:  localPath,
 		})
 		if err != nil {
 			return "", err
 		}
 	}
 
-	return f, nil
+	return localPath, nil
 }
 
 func (g *gitContext) hasAccess(r *http.Request, dir string, rpc string, checkContentType bool) (bool, error) {

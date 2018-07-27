@@ -11,15 +11,17 @@ type (
 		IsNew bool
 	}
 
-	// Preprocessor is called on every git request.
-	Preprocessor struct {
-		// Update the code now
+	// Preprocesser is called on every git request.
+	Preprocesser struct {
+		// Process updates the code.
 		Process func(params *ProcessParams) error
+		// Path checks if the requested uri is valid and returns a deterministic local repository path.
+		Path func(rawPath string) (targetPath string, err error)
 	}
 )
 
-// IsNil returns true if a the Preprocessor struct is nil.
-func (t *Preprocessor) IsNil() bool {
+// IsNil returns true if a the Preprocesser struct is nil.
+func (t *Preprocesser) IsNil() bool {
 	if t == nil {
 		return true
 	}
