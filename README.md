@@ -1,9 +1,9 @@
 go-git-http
 ===========
 
-[![Build Status](https://travis-ci.org/gofunky/go-git-http.svg)](https://travis-ci.org/gofunky/go-git-http)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gofunky/go-git-http)](https://goreportcard.com/report/github.com/gofunky/go-git-http)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9fa1af12e15f48dc87423ca2cff0c752)](https://www.codacy.com/app/gofunky/go-git-http?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gofunky/go-git-http&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/gofunky/githttp.svg)](https://travis-ci.org/gofunky/githttp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gofunky/githttp)](https://goreportcard.com/report/github.com/gofunky/githttp)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/eeef5dbed01a4f84a76c2bf96fb8a158)](https://www.codacy.com/app/gofunky/githttp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gofunky/githttp&amp;utm_campaign=Badge_Grade)
 
 A Smart Git Http server library in Go (golang)
 
