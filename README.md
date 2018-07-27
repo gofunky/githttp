@@ -1,4 +1,4 @@
-go-git-http
+githttp
 ===========
 
 [![Build Status](https://travis-ci.org/gofunky/githttp.svg)](https://travis-ci.org/gofunky/githttp)
@@ -16,7 +16,7 @@ import (
     "log"
     "net/http"
 
-    "github.com/gofunky/go-git-http"
+    "github.com/gofunky/githttp"
 )
 
 func main() {
@@ -65,8 +65,8 @@ import (
     "log"
     "net/http"
 
-    "github.com/gofunky/go-git-http"
-    "github.com/gofunky/go-git-http/auth"
+    "github.com/gofunky/githttp"
+    "github.com/gofunky/githttp/auth"
 )
 
 
