@@ -36,7 +36,9 @@ type (
 
 		// Implicit generation
 		AutoCreate bool
-		Prep       *Preprocesser
+
+		// May be used to create a common context for the preprocessing funcs
+		Prep func() Preprocesser
 
 		// Event handling functions
 		EventHandler func(ev Event)
@@ -256,8 +258,16 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 	}
 
 	var subDir string
-	if !options.Prep.IsNil() && options.Prep.Path != nil {
-		subDir, err = options.Prep.Path(repoPath)
+
+	// Create preprocessing context
+	var prepper = &Preprocesser{}
+	if options.Prep != nil {
+		optPrep := options.Prep()
+		prepper = &optPrep
+	}
+
+	if !prepper.IsPathNil() {
+		subDir, err = prepper.Path(repoPath)
 		if err != nil {
 			return "", err
 		}
@@ -282,8 +292,8 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 		}
 		isNew = true
 	}
-	if !options.Prep.IsNil() && options.Prep.Process != nil {
-		err := options.Prep.Process(&ProcessParams{
+	if !prepper.IsProcessNil() {
+		err := prepper.Process(&ProcessParams{
 			Repository: repoPath,
 			LocalPath:  localPath,
 			IsNew:      isNew,

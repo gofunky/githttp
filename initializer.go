@@ -20,9 +20,17 @@ type (
 	}
 )
 
-// IsNil returns true if a the Preprocesser struct is nil.
-func (t *Preprocesser) IsNil() bool {
-	if t == nil {
+// IsProcessNil returns true if a the Preprocesser struct or the Process func is nil.
+func (t *Preprocesser) IsProcessNil() bool {
+	if t == nil || t.Process == nil {
+		return true
+	}
+	return false
+}
+
+// IsPathNil returns true if a the Preprocesser struct or the IsPathNil func is nil.
+func (t *Preprocesser) IsPathNil() bool {
+	if t == nil || t.Path == nil {
 		return true
 	}
 	return false

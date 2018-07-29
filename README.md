@@ -31,7 +31,8 @@ func main() {
     	    	log.Fatal(ev)
     	    }
     	},
-    	Prep: &githttp.Preprocesser{
+    	Prep: func() githttp.Preprocesser {
+    		return githttp.Preprocesser{
             Process:func(params *githttp.ProcessParams) error {
             	if params.IsNew {
             		// E.g., generate .gitignore file
@@ -45,7 +46,7 @@ func main() {
             	// Resulting target path will be "./my/repos/{hash(rawPath)}/
             	return string(h.Sum(nil)), nil
             },
-    	},
+    	}},
     })
     // Panic if the server context couldn't be created
     if err != nil {
