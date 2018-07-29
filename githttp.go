@@ -265,6 +265,7 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 		subDir = repoPath
 	}
 	localPath := path.Join(root, subDir)
+	var isNew bool
 	if _, err := os.Stat(localPath); os.IsNotExist(err) {
 		// If AutoCreate is false, just bail
 		if !options.AutoCreate {
@@ -279,21 +280,13 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 		if err != nil {
 			return "", err
 		}
-		if !options.Prep.IsNil() && options.Prep.Process != nil {
-			err = options.Prep.Process(&ProcessParams{
-				Repository: repoPath,
-				LocalPath:  localPath,
-				IsNew:      true,
-			})
-			if err != nil {
-				return "", err
-			}
-		}
-
-	} else if !options.Prep.IsNil() && options.Prep.Process != nil {
+		isNew = true
+	}
+	if !options.Prep.IsNil() && options.Prep.Process != nil {
 		err := options.Prep.Process(&ProcessParams{
 			Repository: repoPath,
 			LocalPath:  localPath,
+			IsNew:      isNew,
 		})
 		if err != nil {
 			return "", err
