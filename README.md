@@ -26,6 +26,7 @@ func main() {
     	AutoCreate: true,
     	ReceivePack: true,
     	UploadPack: true,
+    	NoBare: true,
     	EventHandler: func(ev githttp.Event) {
     	    if ev.Error != nil {
     	    	log.Fatal(ev)
