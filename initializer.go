@@ -1,14 +1,20 @@
 package githttp
 
+import (
+	gogit "gopkg.in/src-d/go-git.v4"
+)
+
 type (
 	// ProcessParams contain the preprocessing parameters.
 	ProcessParams struct {
 		// The public path to the git repository
-		Repository string
+		RepositoryPath string
 		// Local path of the git repository where the files are located
 		LocalPath string
 		// If the repository has just been created
 		IsNew bool
+		// The gogit repository
+		Repository *gogit.Repository
 	}
 
 	// Preprocesser is called on every git request.

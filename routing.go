@@ -16,7 +16,7 @@ type Service struct {
 type HandlerReq struct {
 	w    http.ResponseWriter
 	r    *http.Request
-	Rpc  string
+	RPC  string
 	Dir  string
 	File string
 }

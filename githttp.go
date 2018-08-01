@@ -2,11 +2,13 @@ package githttp
 
 import (
 	"fmt"
+	gogit "gopkg.in/src-d/go-git.v4"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,6 +35,9 @@ type (
 		// Access rules
 		UploadPack  bool
 		ReceivePack bool
+
+		// To disable bare init
+		NoBare bool
 
 		// Implicit generation
 		AutoCreate bool
@@ -88,7 +93,7 @@ func (g *gitContext) event(e Event) {
 // Actual command handling functions
 
 func (g *gitContext) serviceRPC(hr HandlerReq) error {
-	w, r, rpc, dir := hr.w, hr.r, hr.Rpc, hr.Dir
+	w, r, rpc, dir := hr.w, hr.r, hr.RPC, hr.Dir
 
 	access, err := g.hasAccess(r, dir, rpc, true)
 	if err != nil {
@@ -275,8 +280,15 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 		subDir = repoPath
 	}
 	localPath := path.Join(root, subDir)
+	absPath, err := filepath.Abs(localPath)
+	if err != nil {
+		return "", err
+	}
 	var isNew bool
-	if _, err := os.Stat(localPath); os.IsNotExist(err) {
+	var repo *gogit.Repository
+	if checkRepo, err := gogit.PlainOpen(absPath); err == nil {
+		repo = checkRepo
+	} else {
 		// If AutoCreate is false, just bail
 		if !options.AutoCreate {
 			return "", err
@@ -286,7 +298,7 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 		if err != nil {
 			return "", err
 		}
-		_, err = g.gitCommand(localPath, "--bare", "init")
+		repo, err = gogit.PlainInit(absPath, !options.NoBare)
 		if err != nil {
 			return "", err
 		}
@@ -294,9 +306,10 @@ func (g *gitContext) getGitDir(repoPath string) (targetPath string, err error) {
 	}
 	if !prepper.IsProcessNil() {
 		err := prepper.Process(&ProcessParams{
-			Repository: repoPath,
-			LocalPath:  localPath,
-			IsNew:      isNew,
+			RepositoryPath: repoPath,
+			LocalPath:      absPath,
+			IsNew:          isNew,
+			Repository:     repo,
 		})
 		if err != nil {
 			return "", err
