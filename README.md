@@ -2,6 +2,7 @@ githttp
 ===========
 
 [![Build Status](https://travis-ci.org/gofunky/githttp.svg)](https://travis-ci.org/gofunky/githttp)
+[![GoDoc](https://godoc.org/github.com/gofunky/githttp?status.svg)](https://godoc.org/github.com/gofunky/githttp)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gofunky/githttp)](https://goreportcard.com/report/github.com/gofunky/githttp)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/eeef5dbed01a4f84a76c2bf96fb8a158)](https://www.codacy.com/app/gofunky/githttp?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gofunky/githttp&amp;utm_campaign=Badge_Grade)
 
