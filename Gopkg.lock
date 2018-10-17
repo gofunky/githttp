@@ -148,7 +148,7 @@
   version = "v4.2.0"
 
 [[projects]]
-  digest = "1:a77c60b21f224f0ddc9c7e9407008c6e7dfbca88e5a6e827aa27ecf80497ebb6"
+  digest = "1:aba7e5443af0e0c35ecec6116dc89ab2c602ce6752f8d16f3b5206c9c89d3c7c"
   name = "gopkg.in/src-d/go-git.v4"
   packages = [
     ".",
@@ -193,8 +193,8 @@
     "utils/merkletrie/noder",
   ]
   pruneopts = ""
-  revision = "d3cec13ac0b195bfb897ed038a08b5130ab9969e"
-  version = "v4.7.0"
+  revision = "cd64b4d630b6c2d2b3d72e9615e14f9d58bb5787"
+  version = "v4.7.1"
 
 [[projects]]
   digest = "1:ceec7e96590fb8168f36df4795fefe17051d4b0c2acc7ec4e260d8138c4dafac"
